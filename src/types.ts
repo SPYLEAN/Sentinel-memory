@@ -34,6 +34,7 @@ export interface InterventionOutcome {
 
 export interface Strategy {
   id: string;
+  simulationStrategyId: string;
   title: string;
   description: string;
   projectedRisk: number;
@@ -46,6 +47,15 @@ export interface Strategy {
     previousFailures: number;
     evidenceIds: string[];
   };
+  simulationInfluence: {
+    improvement: number;
+    constraintPenalty: number;
+    warnings: string[];
+    constraintViolations: string[];
+  };
+  historicalFailurePenalty: number;
+  finalScore: number;
+  status: Array<'GENERIC' | 'MEMORY-INFORMED' | 'SIMULATION-VALIDATED' | 'CONSTRAINT-BLOCKED'>;
 }
 
 export interface IncidentAnalysis {
@@ -57,9 +67,13 @@ export interface IncidentAnalysis {
   confidence: number;
   baselineRisk: number;
   context: IncidentContext;
+  environment: unknown;
+  riskAssessment: { riskScore: number; riskLevel: Severity; breakdown: Array<{ id: string; label: string; contribution: number; explanation: string }> };
+  simulations: unknown[];
   interventions: InterventionOutcome[];
   memories: MemoryHit[];
   recommendationReason: string;
+  recommendation: Strategy;
   strategies: Strategy[];
   createdAt: string;
 }

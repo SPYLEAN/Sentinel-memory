@@ -8,7 +8,7 @@
     "dev:web": "vite",
     "dev:server": "tsx watch server/index.ts",
     "build": "tsc -b && vite build",
-    "test": "tsx --test server/engine/strategy.test.ts",
+    "test": "tsx --test server/engine/strategy.test.ts server/engine/risk.test.ts server/engine/simulator.test.ts",
     "start": "tsx server/index.ts"
   },
   "dependencies": {

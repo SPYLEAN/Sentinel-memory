@@ -13,6 +13,7 @@ export default function App() {
   const [message, setMessage] = useState('');
   const [ask, setAsk] = useState('What worked during similar crowd surges?');
   const [answer, setAnswer] = useState('');
+  const [judgeSession, setJudgeSession] = useState('');
 
   const refresh = () => api.state().then(setState).catch((e) => setMessage(e.message));
   useEffect(() => { refresh(); }, []);
@@ -57,6 +58,42 @@ export default function App() {
     finally { setBusy(false); }
   }
 
+  async function resetJudge() {
+    setBusy(true); setMessage(''); setAnalysis(null); setAnswer('');
+    try {
+      const result = await api.judgeReset();
+      setJudgeSession(result.sessionId);
+      setMessage('Judge mode reset. Day 1 is ready.');
+    } catch (e) { setMessage(e instanceof Error ? e.message : 'Judge reset failed'); }
+    finally { setBusy(false); }
+  }
+
+  async function runJudgeDayOne() {
+    if (!judgeSession) return;
+    setBusy(true); setMessage('');
+    try {
+      const result = await api.judgeIncidentOne(judgeSession);
+      setAnalysis(result.incident);
+      setMessage(`Day 1 complete. ${result.memoryRetainedEvent.status}.`);
+      await refresh();
+    } catch (e) { setMessage(e instanceof Error ? e.message : 'Day 1 failed'); }
+    finally { setBusy(false); }
+  }
+
+  async function runJudgeDayTwo(gateCUnavailable = false) {
+    if (!judgeSession) return;
+    setBusy(true); setMessage(''); setAnswer('');
+    try {
+      const result = await api.judgeIncidentTwo(judgeSession, gateCUnavailable);
+      setAnalysis(result.incident);
+      setDescription(result.incident.description);
+      setMessage(gateCUnavailable
+        ? `Constraint proof: ${result.recommendation.title} promoted; Gate C-dependent routing blocked.`
+        : `Day 12 recalled ${result.memoryFound} memories. ${result.recommendation.title} recommended.`);
+    } catch (e) { setMessage(e instanceof Error ? e.message : 'Judge scenario failed'); }
+    finally { setBusy(false); }
+  }
+
   return (
     <main className="shell">
       <header className="topbar">
@@ -66,7 +103,13 @@ export default function App() {
 
       <section className="hero-strip">
         <div><p className="eyebrow">MEMORY-NATIVE PHYSICAL OPERATIONS</p><h1>The operations agent that remembers what worked.</h1></div>
-        <button className="ghost" onClick={seedMemory} disabled={busy}><Database size={16}/> Seed demo memory</button>
+        <div className="judge-actions">
+          {state?.memoryMode === 'fallback' && <button className="ghost" onClick={seedMemory} disabled={busy}><Database size={16}/> Seed demo memory</button>}
+          <button className="ghost" onClick={resetJudge} disabled={busy}>Reset judge</button>
+          <button className="ghost" onClick={runJudgeDayOne} disabled={busy || !judgeSession}>Run Day 1</button>
+          <button className="ghost" onClick={()=>runJudgeDayTwo(false)} disabled={busy || !judgeSession}>Run Day 12</button>
+          <button className="ghost" onClick={()=>runJudgeDayTwo(true)} disabled={busy || !judgeSession}>Close Gate C</button>
+        </div>
       </section>
 
       <section className="metrics">
@@ -113,7 +156,7 @@ export default function App() {
           {!analysis ? <Empty text="Strategies will appear after incident analysis."/> : <div className="strategy-list">
             {analysis.strategies.map((s, i)=><button key={s.id} className="strategy" onClick={()=>resolve(s.id)} disabled={busy}>
               <span className="num">0{i+1}</span><span className="strategy-copy"><b>{s.title}</b><small>{s.description}</small><small>BASE {Math.round(s.memoryInfluence.baselineSuitability*100)}% / MEMORY {s.memoryInfluence.historicalSupport >= 0 ? '+' : ''}{s.memoryInfluence.historicalSupport} / FINAL {Math.round(s.confidence*100)}%</small></span>
-              <span className="projection"><b>{s.projectedRisk}</b><small>projected risk</small>{s.learnedFromMemory && <em>MEMORY-INFORMED</em>}</span>
+              <span className="projection"><b>{s.projectedRisk}</b><small>projected risk</small>{s.status.map((status)=><em key={status}>{status}</em>)}</span>
             </button>)}
           </div>}
         </div>

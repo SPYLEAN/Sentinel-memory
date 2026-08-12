@@ -1,6 +1,6 @@
 import type { IncidentAnalysis, InterventionOutcome } from '../types';
 
-export function buildRecallQuery(incident: Omit<IncidentAnalysis, 'id' | 'memories' | 'recommendationReason' | 'strategies' | 'createdAt' | 'interventions'>) {
+export function buildRecallQuery(incident: Pick<IncidentAnalysis, 'type' | 'location' | 'severity' | 'baselineRisk' | 'context'>) {
   return [
     'Find similar physical-operations incidents and outcome evidence.',
     `Category: ${incident.type}.`,

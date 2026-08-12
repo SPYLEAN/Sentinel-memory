@@ -1,5 +1,5 @@
 import { HindsightClient, HindsightError } from '@vectorize-io/hindsight-client';
-import type { MemoryProvider, RetainOptions } from './types';
+import type { MemoryProvider, MemoryQueryOptions, RetainOptions } from './types';
 import type { MemoryHit } from '../types';
 
 export class MemoryServiceError extends Error {
@@ -68,7 +68,7 @@ export class HindsightMemory implements MemoryProvider {
     }
   }
 
-  async recall(query: string): Promise<MemoryHit[]> {
+  async recall(query: string, options?: MemoryQueryOptions): Promise<MemoryHit[]> {
     try {
       console.info('[memory trace] RECALL START');
       const response = await this.client.recall(this.bankId, query, {
@@ -77,8 +77,8 @@ export class HindsightMemory implements MemoryProvider {
         types: ['world', 'experience', 'observation'],
         preferObservations: true,
         includeSourceFacts: true,
-        tags: ['sentinel-operational-experience'],
-        tagsMatch: 'any_strict'
+        tags: options?.tags ?? ['sentinel-operational-experience'],
+        tagsMatch: options?.tagsMatch ?? 'any_strict'
       });
       const memories = response.results.slice(0, 6).map((result) => ({
         text: result.text,
@@ -99,15 +99,15 @@ export class HindsightMemory implements MemoryProvider {
     }
   }
 
-  async reflect(query: string, context?: string) {
+  async reflect(query: string, context?: string, options?: MemoryQueryOptions) {
     try {
       const response = await this.client.reflect(this.bankId, query, {
         context,
         budget: 'mid',
         factTypes: ['world', 'experience', 'observation'],
         includeFacts: true,
-        tags: ['sentinel-operational-experience'],
-        tagsMatch: 'any_strict'
+        tags: options?.tags ?? ['sentinel-operational-experience'],
+        tagsMatch: options?.tagsMatch ?? 'any_strict'
       });
       return { text: response.text, evidence: response.based_on };
     } catch (error) {

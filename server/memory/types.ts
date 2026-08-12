@@ -21,12 +21,17 @@ export interface ReflectResult {
   evidence?: unknown;
 }
 
+export interface MemoryQueryOptions {
+  tags?: string[];
+  tagsMatch?: 'any' | 'all' | 'any_strict' | 'all_strict' | 'exact';
+}
+
 export interface MemoryProvider {
   mode: 'hindsight' | 'fallback';
   bankId: string;
   init(): Promise<void>;
   health(): MemoryHealth;
   retain(content: string, options?: RetainOptions): Promise<void>;
-  recall(query: string): Promise<MemoryHit[]>;
-  reflect(query: string, context?: string): Promise<ReflectResult>;
+  recall(query: string, options?: MemoryQueryOptions): Promise<MemoryHit[]>;
+  reflect(query: string, context?: string, options?: MemoryQueryOptions): Promise<ReflectResult>;
 }

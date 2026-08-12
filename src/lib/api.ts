@@ -26,7 +26,14 @@ export const api = {
       { method: 'POST', body: JSON.stringify({ strategyId }) }
     ),
   ask: (query: string) =>
-    request<{ answer: string; memories: { text: string; type?: string }[]; evidence?: unknown }>('/api/ask', {
+    request<{ answer: string; confidence: number; currentStateEvidence: unknown; memoryEvidence: unknown; simulationEvidence: unknown[]; recommendation: IncidentAnalysis['recommendation'] }>('/api/ask', {
       method: 'POST', body: JSON.stringify({ query })
-    })
+    }),
+  judgeReset: () => request<{ sessionId: string; scenario: string }>('/api/judge/reset', { method: 'POST', body: '{}' }),
+  judgeIncidentOne: (sessionId: string) => request<{ sessionId: string; scenario: string; incident: IncidentAnalysis; memoryRetainedEvent: { status: string } }>('/api/judge/incident-one', {
+    method: 'POST', body: JSON.stringify({ sessionId })
+  }),
+  judgeIncidentTwo: (sessionId: string, gateCUnavailable = false) => request<{ sessionId: string; scenario: string; incident: IncidentAnalysis; memoryFound: number; recommendation: IncidentAnalysis['recommendation'] }>('/api/judge/incident-two', {
+    method: 'POST', body: JSON.stringify({ sessionId, gateCUnavailable })
+  })
 };
