@@ -1,4 +1,4 @@
-import type { MemoryHit } from '../types';
+import type { MemoryHit } from '../types.js';
 
 export interface MemoryHealth {
   mode: 'hindsight' | 'fallback';

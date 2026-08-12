@@ -1,4 +1,4 @@
-import type { Severity } from '../types';
+import type { Severity } from '../types.js';
 
 export function classifyIncident(description: string) {
   const t = description.toLowerCase();

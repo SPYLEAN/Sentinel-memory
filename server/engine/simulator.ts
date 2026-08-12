@@ -1,6 +1,6 @@
-import { assessRisk } from './risk';
-import { cloneEnvironment } from '../world/venue';
-import type { EnvironmentState } from '../world/types';
+import { assessRisk } from './risk.js';
+import { cloneEnvironment } from '../world/venue.js';
+import type { EnvironmentState } from '../world/types.js';
 
 export type SimulationStrategyId = 'SINGLE_GATE_DIVERSION' | 'DISTRIBUTED_EXIT_ROUTING' | 'TEMPORARY_INFLOW_HOLD' | 'AUXILIARY_ROUTE';
 

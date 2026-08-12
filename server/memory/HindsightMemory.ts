@@ -1,6 +1,6 @@
 import { HindsightClient, HindsightError } from '@vectorize-io/hindsight-client';
-import type { MemoryProvider, MemoryQueryOptions, RetainOptions } from './types';
-import type { MemoryHit } from '../types';
+import type { MemoryProvider, MemoryQueryOptions, RetainOptions } from './types.js';
+import type { MemoryHit } from '../types.js';
 
 export class MemoryServiceError extends Error {
   constructor(message: string, public statusCode = 503) {

@@ -1,5 +1,5 @@
-import type { Severity } from '../types';
-import type { EnvironmentState } from '../world/types';
+import type { Severity } from '../types.js';
+import type { EnvironmentState } from '../world/types.js';
 
 export interface RiskFactor {
   id: string;

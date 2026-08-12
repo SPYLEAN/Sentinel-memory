@@ -1,7 +1,7 @@
 export type Severity = 'LOW' | 'MODERATE' | 'HIGH' | 'CRITICAL';
-import type { RiskAssessment } from './engine/risk';
-import type { SimulationResult } from './engine/simulator';
-import type { EnvironmentState } from './world/types';
+import type { RiskAssessment } from './engine/risk.js';
+import type { SimulationResult } from './engine/simulator.js';
+import type { EnvironmentState } from './world/types.js';
 export interface MemoryEvidence { id?: string; context?: string; documentId?: string; tags?: string[]; sourceFactIds?: string[]; }
 export interface MemoryHit { text: string; type?: string; score?: number; evidence?: MemoryEvidence; }
 export interface IncidentContext {

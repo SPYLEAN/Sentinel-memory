@@ -1,5 +1,5 @@
-import type { MemoryProvider } from './types';
-import type { MemoryHit } from '../types';
+import type { MemoryProvider } from './types.js';
+import type { MemoryHit } from '../types.js';
 
 export class FallbackMemory implements MemoryProvider {
   mode = 'fallback' as const;

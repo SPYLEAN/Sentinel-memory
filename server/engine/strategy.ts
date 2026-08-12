@@ -1,5 +1,5 @@
-import type { MemoryHit, Strategy } from '../types';
-import type { SimulationResult, SimulationStrategyId } from './simulator';
+import type { MemoryHit, Strategy } from '../types.js';
+import type { SimulationResult, SimulationStrategyId } from './simulator.js';
 
 const simulationIds: Record<string, SimulationStrategyId> = {
   'distributed-routing': 'DISTRIBUTED_EXIT_ROUTING',

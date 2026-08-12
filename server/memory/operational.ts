@@ -1,4 +1,4 @@
-import type { IncidentAnalysis, InterventionOutcome } from '../types';
+import type { IncidentAnalysis, InterventionOutcome } from '../types.js';
 
 export function buildRecallQuery(incident: Pick<IncidentAnalysis, 'type' | 'location' | 'severity' | 'baselineRisk' | 'context'>) {
   return [

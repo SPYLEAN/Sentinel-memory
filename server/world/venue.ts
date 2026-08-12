@@ -1,4 +1,4 @@
-import type { EnvironmentState, EnvironmentUpdate, OperationalConstraint } from './types';
+import type { EnvironmentState, EnvironmentUpdate, OperationalConstraint } from './types.js';
 
 const iso = () => new Date().toISOString();
 
