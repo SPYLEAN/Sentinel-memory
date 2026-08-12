@@ -7,6 +7,7 @@ export class FallbackMemory implements MemoryProvider {
   private memories: string[] = [];
   constructor(bankId: string) { this.bankId = bankId; }
   async init() {}
+  health() { return { mode: this.mode, connected: true, status: 'demo' as const }; }
   async retain(content: string) { this.memories.push(content); }
   async recall(query: string): Promise<MemoryHit[]> {
     const terms = new Set(query.toLowerCase().split(/\W+/).filter(x => x.length > 3));

@@ -23,7 +23,10 @@ const memory: MemoryProvider = apiKey
 await memory.init();
 console.log(`[memory] mode=${memory.mode} bank=${memory.bankId}`);
 
-app.get('/api/health', (_req,res)=>res.json({ok:true,memoryMode:memory.mode}));
+app.get('/api/health', (_req,res)=>{
+  const memoryHealth = memory.health();
+  res.json({ ok: true, memoryMode: memory.mode, memory: memoryHealth });
+});
 app.get('/api/state', (_req,res)=>res.json({ memoryMode: memory.mode, bankId: memory.bankId, ...counters }));
 
 app.post('/api/memory/seed', async (_req,res,next)=>{
@@ -87,7 +90,8 @@ app.post('/api/ask', async (req,res,next)=>{
 
 app.use((err:any,_req:any,res:any,_next:any)=>{
   console.error(err);
-  res.status(500).json({error:err?.message || 'Internal server error'});
+  const status = Number.isInteger(err?.statusCode) ? err.statusCode : 500;
+  res.status(status).json({error:err?.message || 'Internal server error'});
 });
 
 const port = Number(process.env.PORT || 8787);
