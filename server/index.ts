@@ -26,8 +26,23 @@ const memory: MemoryProvider = apiKey
   ? new HindsightMemory(bankId, baseUrl, apiKey)
   : new FallbackMemory(bankId);
 
-await memory.init();
-console.log(`[memory] mode=${memory.mode} bank=${memory.bankId}`);
+let memoryInitialized = false;
+async function ensureMemoryInitialized() {
+  if (!memoryInitialized) {
+    try {
+      await memory.init();
+      console.log(`[memory] mode=${memory.mode} bank=${memory.bankId}`);
+    } catch (err) {
+      console.error('[memory] init error:', err);
+    }
+    memoryInitialized = true;
+  }
+}
+
+app.use(async (_req, _res, next) => {
+  await ensureMemoryInitialized();
+  next();
+});
 
 let currentEnvironment = createDemoEnvironment('concert');
 let activeJudgeSession: string | undefined;
