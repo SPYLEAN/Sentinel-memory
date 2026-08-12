@@ -61,7 +61,7 @@ export default function App() {
     <main className="shell">
       <header className="topbar">
         <div className="brand"><Radar size={22}/><span>SENTINEL</span><em>MEMORY</em></div>
-        <div className="status"><span className="pulse"/> HINDSIGHT {state?.memoryMode === 'hindsight' ? 'CONNECTED' : 'DEMO MODE'}</div>
+        <div className="status"><span className="pulse"/> HINDSIGHT {state?.memoryMode === 'hindsight' ? (state.memoryConnected ? 'CONNECTED' : 'ERROR') : 'DEMO MODE'}</div>
       </header>
 
       <section className="hero-strip">
@@ -93,7 +93,7 @@ export default function App() {
           <PanelTitle icon={<BrainCircuit size={17}/>} title="MEMORY RECALL" meta={`${analysis?.memories.length ?? 0} MATCHES`} />
           {!analysis ? <Empty text="Analyze an incident to recall operational experience."/> : analysis.memories.length === 0 ? <Empty text="No relevant incident memory found. SENTINEL is operating from first principles."/> : (
             <div className="memory-list">
-              {analysis.memories.slice(0,4).map((m, i) => <article key={i}><small>{m.type || 'experience'} / #{String(i+1).padStart(2,'0')}</small><p>{m.text}</p></article>)}
+              {analysis.memories.slice(0,4).map((m, i) => <article key={i}><small>{m.type || 'experience'} / #{String(i+1).padStart(2,'0')}{typeof m.score === 'number' ? ` / relevance ${m.score.toFixed(3)}` : ''}{m.evidence?.id ? ` / source ${m.evidence.id.slice(0,8)}` : ''}</small><p>{m.text}</p></article>)}
             </div>
           )}
         </div>
@@ -112,7 +112,7 @@ export default function App() {
           <PanelTitle icon={<Activity size={17}/>} title="RESPONSE STRATEGIES" meta="SIMULATED" />
           {!analysis ? <Empty text="Strategies will appear after incident analysis."/> : <div className="strategy-list">
             {analysis.strategies.map((s, i)=><button key={s.id} className="strategy" onClick={()=>resolve(s.id)} disabled={busy}>
-              <span className="num">0{i+1}</span><span className="strategy-copy"><b>{s.title}</b><small>{s.description}</small></span>
+              <span className="num">0{i+1}</span><span className="strategy-copy"><b>{s.title}</b><small>{s.description}</small><small>BASE {Math.round(s.memoryInfluence.baselineSuitability*100)}% / MEMORY {s.memoryInfluence.historicalSupport >= 0 ? '+' : ''}{s.memoryInfluence.historicalSupport} / FINAL {Math.round(s.confidence*100)}%</small></span>
               <span className="projection"><b>{s.projectedRisk}</b><small>projected risk</small>{s.learnedFromMemory && <em>MEMORY-INFORMED</em>}</span>
             </button>)}
           </div>}

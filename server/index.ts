@@ -7,6 +7,7 @@ import { FallbackMemory } from './memory/FallbackMemory';
 import type { MemoryProvider } from './memory/types';
 import { classifyIncident } from './engine/incident';
 import { buildStrategies } from './engine/strategy';
+import { buildRecallQuery, formatOperationalExperience, routesForStrategy } from './memory/operational';
 import { counters, incidents } from './store';
 
 const app = express();
@@ -25,9 +26,10 @@ console.log(`[memory] mode=${memory.mode} bank=${memory.bankId}`);
 
 app.get('/api/health', (_req,res)=>{
   const memoryHealth = memory.health();
-  res.json({ ok: true, memoryMode: memory.mode, memory: memoryHealth });
+  const ok = memory.mode === 'fallback' || memoryHealth.connected;
+  res.status(ok ? 200 : 503).json({ ok, memoryMode: memory.mode, bankId: memory.bankId, memory: memoryHealth });
 });
-app.get('/api/state', (_req,res)=>res.json({ memoryMode: memory.mode, bankId: memory.bankId, ...counters }));
+app.get('/api/state', (_req,res)=>res.json({ memoryMode: memory.mode, memoryConnected: memory.health().connected, bankId: memory.bankId, ...counters }));
 
 app.post('/api/memory/seed', async (_req,res,next)=>{
   try {
@@ -49,10 +51,10 @@ app.post('/api/incidents/analyze', async (req,res,next)=>{
     const description = String(req.body?.description || '').trim();
     if (!description) return res.status(400).json({error:'description is required'});
     const parsed = classifyIncident(description);
-    const query = `${parsed.type} at ${parsed.location}. Context: ${description}. What similar incidents, responses, and outcomes should guide the current decision?`;
+    const query = buildRecallQuery({ description, ...parsed });
     const memories = await memory.recall(query);
     const { strategies, reason } = buildStrategies(parsed.baselineRisk, memories);
-    const incident = { id: randomUUID(), description, ...parsed, memories, recommendationReason: reason, strategies, createdAt:new Date().toISOString() };
+    const incident = { id: randomUUID(), description, ...parsed, interventions: [], memories, recommendationReason: reason, strategies, createdAt:new Date().toISOString() };
     incidents.set(incident.id, incident);
     res.json(incident);
   } catch(e){next(e)}
@@ -64,15 +66,43 @@ app.post('/api/incidents/:id/resolve', async (req,res,next)=>{
     if (!incident) return res.status(404).json({error:'incident not found'});
     const strategy = incident.strategies.find(s=>s.id === req.body?.strategyId);
     if (!strategy) return res.status(400).json({error:'invalid strategy'});
-    const outcomeRisk = strategy.projectedRisk;
-    const content = `INCIDENT EXPERIENCE: ${incident.type} at ${incident.location}. Situation: ${incident.description}. Baseline risk ${incident.baselineRisk}/100. Operator selected strategy: ${strategy.title}. Response: ${strategy.description}. Observed/simulated outcome risk ${outcomeRisk}/100. Effectiveness: ${outcomeRisk <= 35 ? 'strong' : outcomeRisk <= 55 ? 'partial' : 'weak'}. This experience should inform future incidents with similar crowd behavior and venue conditions.`;
-    await memory.retain(content);
+    const requestedRisk = Number(req.body?.outcomeRisk);
+    const outcomeRisk = Number.isFinite(requestedRisk) && requestedRisk >= 0 && requestedRisk <= 100 ? requestedRisk : strategy.projectedRisk;
+    const riskBefore = incident.interventions.at(-1)?.riskAfter ?? incident.baselineRisk;
+    const successLevel = outcomeRisk <= 35 ? 'strong' : outcomeRisk <= 55 ? 'partial' : 'weak';
+    const intervention = {
+      strategyId: strategy.id,
+      strategyTitle: strategy.title,
+      routes: routesForStrategy(strategy.id),
+      operatorChanges: String(req.body?.operatorChanges || strategy.description),
+      riskBefore,
+      riskAfter: outcomeRisk,
+      successLevel
+    } as const;
+    const interventions = [...incident.interventions, intervention];
+    const staged = { ...incident, interventions };
+    const finalize = req.body?.finalize !== false;
+    console.info(`[memory trace] OUTCOME strategy=${strategy.id} risk=${riskBefore}->${outcomeRisk} success=${successLevel} final=${finalize}`);
+    if (!finalize) {
+      incidents.set(staged.id, staged);
+      return res.json({ incident: staged, outcomeRisk, memoryCreated: false });
+    }
+
+    const content = formatOperationalExperience(staged, interventions);
+    await memory.retain(content, {
+      timestamp: incident.createdAt,
+      context: `${incident.type} at ${incident.location}; ${incident.context.eventPhase}; ${incident.context.congestionType}`,
+      documentId: `sentinel-incident-${incident.id}`,
+      metadata: { incidentId: incident.id, category: incident.type, severity: incident.severity, successLevel, finalStrategy: strategy.id },
+      tags: ['sentinel-operational-experience', 'physical-operations', incident.type.toLowerCase().replace(/[^a-z0-9]+/g, '-'), incident.context.eventPhase.toLowerCase().replace(/[^a-z0-9]+/g, '-')],
+      updateMode: 'replace'
+    });
     counters.incidentsRemembered += 1;
     counters.responsesObserved += 1;
     if (outcomeRisk <= 35) counters.patternsLearned += 1;
-    const updated = { ...incident, recommendationReason: `${incident.recommendationReason} Outcome retained in Hindsight for future recall.` };
+    const updated = { ...staged, recommendationReason: `${incident.recommendationReason} Outcome retained in ${memory.mode === 'hindsight' ? 'Hindsight operational memory' : 'demo memory'} for future recall.` };
     incidents.set(updated.id, updated);
-    res.json({incident:updated,outcomeRisk,memoryCreated:true});
+    res.json({incident:updated,outcomeRisk,memoryCreated:true,memoryRecord:content});
   } catch(e){next(e)}
 });
 
@@ -81,10 +111,8 @@ app.post('/api/ask', async (req,res,next)=>{
     const query = String(req.body?.query || '').trim();
     if (!query) return res.status(400).json({error:'query is required'});
     const memories = await memory.recall(query);
-    let answer: string;
-    try { answer = await memory.reflect(query); }
-    catch { answer = memories.length ? `Based on recalled operational evidence: ${memories[0].text}` : 'No relevant operational memory found yet.'; }
-    res.json({answer,memories});
+    const reflection = await memory.reflect(query, 'Answer only from retained SENTINEL physical-operations memories. Distinguish successful, partial, and failed interventions. If evidence is insufficient, say so explicitly.');
+    res.json({answer:reflection.text,memories,evidence:reflection.evidence});
   } catch(e){next(e)}
 });
 

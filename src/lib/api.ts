@@ -21,12 +21,12 @@ export const api = {
       body: JSON.stringify({ description })
     }),
   resolve: (incidentId: string, strategyId: string) =>
-    request<{ incident: IncidentAnalysis; outcomeRisk: number; memoryCreated: boolean }>(
+    request<{ incident: IncidentAnalysis; outcomeRisk: number; memoryCreated: boolean; memoryRecord?: string }>(
       `/api/incidents/${incidentId}/resolve`,
       { method: 'POST', body: JSON.stringify({ strategyId }) }
     ),
   ask: (query: string) =>
-    request<{ answer: string; memories: { text: string; type?: string }[] }>('/api/ask', {
+    request<{ answer: string; memories: { text: string; type?: string }[]; evidence?: unknown }>('/api/ask', {
       method: 'POST', body: JSON.stringify({ query })
     })
 };

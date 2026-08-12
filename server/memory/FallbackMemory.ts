@@ -20,7 +20,7 @@ export class FallbackMemory implements MemoryProvider {
   }
   async reflect(query: string) {
     const hits = await this.recall(query);
-    if (!hits.length) return 'I do not have enough operational memory yet. Resolve more incidents so I can learn from outcomes.';
-    return `I found ${hits.length} related operational memories. The strongest evidence says: ${hits[0].text}`;
+    if (!hits.length) return { text: 'I do not have enough operational memory yet. Resolve more incidents so I can learn from outcomes.' };
+    return { text: `I found ${hits.length} related operational memories. The strongest evidence says: ${hits[0].text}`, evidence: hits };
   }
 }

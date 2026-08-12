@@ -4,6 +4,32 @@ export interface MemoryHit {
   text: string;
   type?: string;
   score?: number;
+  evidence?: {
+    id?: string;
+    context?: string;
+    documentId?: string;
+    tags?: string[];
+    sourceFactIds?: string[];
+  };
+}
+
+export interface IncidentContext {
+  crowdConditions: string;
+  occupancyDensity: string;
+  eventPhase: string;
+  gateConditions: string;
+  congestionType: string;
+  environmentalConstraints: string;
+}
+
+export interface InterventionOutcome {
+  strategyId: string;
+  strategyTitle: string;
+  routes: string[];
+  operatorChanges: string;
+  riskBefore: number;
+  riskAfter: number;
+  successLevel: 'strong' | 'partial' | 'weak';
 }
 
 export interface Strategy {
@@ -13,6 +39,13 @@ export interface Strategy {
   projectedRisk: number;
   confidence: number;
   learnedFromMemory: boolean;
+  memoryInfluence: {
+    baselineSuitability: number;
+    historicalSupport: number;
+    previousSuccesses: number;
+    previousFailures: number;
+    evidenceIds: string[];
+  };
 }
 
 export interface IncidentAnalysis {
@@ -23,6 +56,8 @@ export interface IncidentAnalysis {
   severity: Severity;
   confidence: number;
   baselineRisk: number;
+  context: IncidentContext;
+  interventions: InterventionOutcome[];
   memories: MemoryHit[];
   recommendationReason: string;
   strategies: Strategy[];
@@ -31,6 +66,7 @@ export interface IncidentAnalysis {
 
 export interface DashboardState {
   memoryMode: 'hindsight' | 'fallback';
+  memoryConnected: boolean;
   bankId: string;
   incidentsRemembered: number;
   responsesObserved: number;
