@@ -30,7 +30,7 @@ export const api = {
       method: 'POST', body: JSON.stringify({ query })
     }),
   judgeReset: () => request<{ sessionId: string; scenario: string }>('/api/judge/reset', { method: 'POST', body: '{}' }),
-  judgeIncidentOne: (sessionId: string) => request<{ sessionId: string; scenario: string; incident: IncidentAnalysis; memoryRetainedEvent: { status: string } }>('/api/judge/incident-one', {
+  judgeIncidentOne: (sessionId: string) => request<{ sessionId: string; scenario: string; incident: IncidentAnalysis; memoryRetainedEvent: { status: string }; retainedMemory?: string }>('/api/judge/incident-one', {
     method: 'POST', body: JSON.stringify({ sessionId })
   }),
   judgeIncidentTwo: (sessionId: string, gateCUnavailable = false) => request<{ sessionId: string; scenario: string; incident: IncidentAnalysis; memoryFound: number; recommendation: IncidentAnalysis['recommendation'] }>('/api/judge/incident-two', {

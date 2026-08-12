@@ -292,5 +292,9 @@ app.use((err:any,_req:any,res:any,_next:any) => {
   res.status(status).json({error:err?.message || 'Internal server error'});
 });
 
-const port = Number(process.env.PORT || 8787);
-app.listen(port,()=>console.log(`SENTINEL API listening on http://localhost:${port}`));
+export default app;
+
+if (!process.env.VERCEL) {
+  const port = Number(process.env.PORT || 8787);
+  app.listen(port, () => console.log(`SENTINEL API listening on http://localhost:${port}`));
+}
